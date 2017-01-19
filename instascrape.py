@@ -12,7 +12,7 @@ RATE_LIMIT = 6  # seconds
 
 
 class Instagram():
-    """Likes counter for Instagram users without the use of an API"""
+    """Instagram user scraper without an API"""
 
     def __init__(self, user):
         """Initialize the tcp session, database, and other variables
