@@ -101,7 +101,7 @@ class Instagram():
             # but caption key will be absent if no caption exists, so except it
             try:
                 caption = j['entry_data']['ProfilePage'][0]['user']['media']['nodes'][post]['caption']
-            except KeyError:  # no caption
+            except KeyError:
                 caption = None
 
             timestamp = j['entry_data']['ProfilePage'][0]['user']['media']['nodes'][post]['date']
@@ -177,9 +177,9 @@ class Instagram():
     def date_format(self, timestamp):
         """Convert unix timestamp (GMT) to local timezone
 
-        :param timestamp: Unix timestamp found in json
-
         Called only when a new post is written to the db
+
+        :param timestamp: Unix timestamp found in json
 
         tzlocal module allows conversion to correct day based on local timezone
         e.g. 2AM GMT is actually 6,7,8 hours earlier in the USA, and a different date
@@ -209,7 +209,7 @@ class Database:
         """Insert entries into Database
 
         :param code: The instagram share link code (instagram.com/p/{code]})
-        :param likes: The number of likes the post hash
+        :param likes: The number of likes the post has
         :param date: The date the post was created
 
         """
