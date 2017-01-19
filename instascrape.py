@@ -45,7 +45,7 @@ class Instagram():
                                 headers={'user-agent': USER_AGENT})
 
         if self.bad_username(resp):
-            return  # End program
+            raise SystemExit
 
         user_id = re.findall(r'owner[":\s{id]+[0-9]+', resp.text)[0][16:]
         end_cursor = re.findall(r'end_cursor\"\:\s\"[0-9]+', resp.text)[0][14:]
