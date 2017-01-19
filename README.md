@@ -27,5 +27,7 @@ Each post has the following data written to the db:
 
 This is an sqlite3 database, so I suggest using [DB Browser for SQLite](http://sqlitebrowser.org/) for easy navigation. It will allow you to sort by e.g. likes count to find the most popular post.
 
+![alt text](https://i.imgur.com/N2vXhsz.png)
+
 ## Why  
 Just a fun project to better understand python as well as things like csrftoken(s) in a POST request.
