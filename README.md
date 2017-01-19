@@ -1,5 +1,5 @@
 # instascrape
-Retrieve instagram posts and write them to a database without using an API
+Retrieve an instagram user's posts and write them to a database without using an API
 
 ## Requirements
 1. Python 3.6
