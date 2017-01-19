@@ -16,7 +16,7 @@ Simply enter the Instagram username when prompted.
 `RATE_LIMIT = 6  # seconds`  
 
 ## Output  
-Posts are written to a local database created in the same folder as instascraper.py. The database file will be named after the scraped instagram user - e.g. `sportscenter.db`  
+Posts are written to a local database. The database file will be named after the scraped instagram user - e.g. `sportscenter.db`  
 
 Each post has the following data written to the db:  
 * post date
