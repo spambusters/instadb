@@ -20,12 +20,12 @@ Posts are written to a local database created in the same folder as instascraper
 
 Each post has the following data written to the db:  
 * post date
-* share link code (e.g. https://www.instagram.com/p/`BPaG7ecBQIO`/)
+* share link code (e.g. instagram.com/p/`BPaG7ecBQIO`)
 * likes count
 * comment count
 * caption    
 
-This is an sqlite3 database, so I suggest using [DB Browser for SQLite](http://sqlitebrowser.org/) to easily navigate. It will allow you to sort by likes count to find the most popular post, etc.
+This is an sqlite3 database, so I suggest using [DB Browser for SQLite](http://sqlitebrowser.org/) for easy navigation. It will allow you to sort by e.g. likes count to find the most popular post.
 
 ## Why  
 Just a fun project to better understand python as well as things like csrftoken(s) in a POST request.
