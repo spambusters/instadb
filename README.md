@@ -10,17 +10,9 @@ Retrieve an instagram user's posts and write them to a database without using an
 ## Usage
 `python3.6 instascraper.py`  
 
-Simply enter the Instagram username when prompted.  
-12 posts are grabbed per request, and the default rate limit can be changed:  
-
-`RATE_LIMIT = 6  # seconds`  
-
 ## Configuration
-Change the rate limit in seconds  
-`RATE_LIMIT = 6`  
-
-Change the amount of posts retrieved each loop  
-`RETRIEVE = 12`  
+`RATE_LIMIT = 6  # seconds`  
+`RETRIEVE = 12  # posts retrieved each loop`  
 
 ## Output  
 Posts are written to a local database. The database file will be named after the scraped instagram user - e.g. `sportscenter.db`  
