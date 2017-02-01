@@ -9,36 +9,31 @@ import tzlocal
 
 USER_AGENT = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:50.0) Gecko/20100101 Firefox/50.0'
 RATE_LIMIT = 6  # seconds
+RETRIEVE = 12  # posts to retrieve each loop
 
 
 class Instagram():
     """Instagram user scraper without an API"""
 
     def __init__(self, user):
-        """Initialize the tcp session, database, and other variables
+        """Instantiate the TCP session, database, and other variables
 
         :param user: The Instagram username
 
-        counter, total_posts, and total_likes are used purely for terminal print out.
-
         """
-        self.session = requests.Session()  # Pool connections so same csrftoken is used
         self.db = Database()
         self.user = user
+        self.session = requests.Session()  # Pool connections so same csrftoken is used
         self.counter = 0
         self.total_posts = 0
-        self.total_likes = 0
 
     def start(self):
         """Establish variables that will be needed to POST our queries
 
-        We need the end_cursor and user_id to build our first POST payload.
-        We need the token so Instagram will allow us to query.
+        We need the user_id to build our POST payloads.
+        We need the csrftoken so Instagram will allow us to query.
 
-        :returns: Passes POST variables to first_twelve then post_query
-
-        The first 12 posts are found in the initial GET html
-        (json formatted inside <script> tags) so we need to parse them out.
+        :returns: Passes POST variables to post query loop
 
         """
         resp = self.session.get(f'https://www.instagram.com/{self.user}/',
@@ -48,7 +43,6 @@ class Instagram():
             raise SystemExit
 
         user_id = re.findall(r'owner[":\s{id]+[0-9]+', resp.text)[0][16:]
-        end_cursor = re.findall(r'end_cursor\"\:\s\"[0-9]+', resp.text)[0][14:]
         token = resp.cookies['csrftoken']
         headers = {
             'User-Agent': USER_AGENT,
@@ -58,7 +52,8 @@ class Instagram():
             'Referer': 'https://www.instagram.com/',
             'x-csrftoken': token
         }
-        return self.first_twelve(resp.text, user_id, end_cursor, headers)
+        self.total_posts =  self.get_total_posts(resp.text)
+        return self.post_query(user_id, headers)
 
     def bad_username(self, resp):
         """Check for a private profile or 404 link.
@@ -74,71 +69,47 @@ class Instagram():
             print(f'\nUser {self.user} doesn\'t exist!\n')
             return True
 
-    def first_twelve(self, html, user_id, end_cursor, headers):
-        """Parse out the first 12 posts found in the intial GET html
+    def get_total_posts(self, html):
+        """Retrieve the total post count from an Instagram user_account
 
-        :param html: The html (string)
-        :returns: Required POST variables to post_query
+        :param html: The html (string) from the instagram.com/{user} page
+        :returns: total post count
 
-        This method is necessary because the json of the first 12 posts
-        is formatted differently than the POST response json.
+        The total post count is embedded in the instagram.com/{user} html,
+        formatted as json data inside <script> tags.
 
         """
         jaysun = re.findall(r'sharedData.+\<\/', html)
         jaysun = jaysun[0][13:-3]  # trim so it starts/ends with curly brackets
         j = json.loads(jaysun)  # convert to a dict
+        return j['entry_data']['ProfilePage'][0]['user']['media']['count']
 
-        # Traversing deeply nested json makes code look cluttered
-        post_count = len(j['entry_data']['ProfilePage'][0]['user']['media']['nodes'])
-        self.total_posts = j['entry_data']['ProfilePage'][0]['user']['media']['count']
-
-        for post in range(post_count):
-            code = j['entry_data']['ProfilePage'][0]['user']['media']['nodes'][post]['code']
-            likes = int(j['entry_data']['ProfilePage'][0]['user']['media']['nodes'][post]['likes']['count'])
-            comment_count = int(j['entry_data']['ProfilePage'][0]['user']['media']['nodes'][post]['comments']['count'])
-
-            # likes and comment_count keys are always present even if zero,
-            # but caption key will be absent if no caption exists, so except it
-            try:
-                caption = j['entry_data']['ProfilePage'][0]['user']['media']['nodes'][post]['caption']
-            except KeyError:
-                caption = None
-
-            timestamp = j['entry_data']['ProfilePage'][0]['user']['media']['nodes'][post]['date']
-            date = self.date_format(timestamp)
-
-            self.total_likes += likes
-            self.counter += 1
-            print(f'{self.counter}/{self.total_posts}')
-
-            self.db.write(date, code, likes, comment_count, caption)
-
-        return self.post_query(user_id, end_cursor, headers)
-
-    def post_query(self, user_id, end_cursor, headers):
+    def post_query(self, user_id, headers):
         """POST query to receive 12 posts at a time
 
         :param user_id: Instagram user id from initial GET html
-        :param end_cursor: Tells Instagram which posts to send next
         :param headers: The HTTP headers with csrftoken
 
         If the POST json response includes the key 'has_next_page' set to True,
         then perform another POST query using the updated end_cursor
 
-        """
-        while True:
-            print('\n[+] Grabbing 12 more posts\n')
-            sleep(RATE_LIMIT)
+        Initialize an invalid end_cursor, causing Instagram to default
+        retrieve the first 12 posts. From that JSON response we'll
+        get the correct end_cursor needed for the next 12 posts.
 
+        """
+        end_cursor = 1234567890
+        while True:
             # A behemoth appears
-            payload = f'q=ig_user({user_id})+%7B+media.after({end_cursor}%2C+12)+%7B%0A++count%2C%0A++nodes+%7B%0A++++caption%2C%0A++++code%2C%0A++++comments+%7B%0A++++++count%0A++++%7D%2C%0A++++date%2C%0A++++dimensions+%7B%0A++++++height%2C%0A++++++width%0A++++%7D%2C%0A++++display_src%2C%0A++++id%2C%0A++++is_video%2C%0A++++likes+%7B%0A++++++count%0A++++%7D%2C%0A++++owner+%7B%0A++++++id%0A++++%7D%2C%0A++++thumbnail_src%0A++%7D%2C%0A++page_info%0A%7D%0A+%7D&ref=users%3A%3Ashow'
+            payload = f'q=ig_user({user_id})+%7B+media.after({end_cursor}%2C+{RETRIEVE})+%7B%0A++count%2C%0A++nodes+%7B%0A++++caption%2C%0A++++code%2C%0A++++comments+%7B%0A++++++count%0A++++%7D%2C%0A++++date%2C%0A++++dimensions+%7B%0A++++++height%2C%0A++++++width%0A++++%7D%2C%0A++++display_src%2C%0A++++id%2C%0A++++is_video%2C%0A++++likes+%7B%0A++++++count%0A++++%7D%2C%0A++++owner+%7B%0A++++++id%0A++++%7D%2C%0A++++thumbnail_src%0A++%7D%2C%0A++page_info%0A%7D%0A+%7D&ref=users%3A%3Ashow'
 
             resp = self.session.post('https://www.instagram.com/query/', headers=headers, data=payload)
             end_cursor = self.parse_json(resp.json())
-            if end_cursor is False:
-                print('\nFinished!')
-                print(f'Counted {self.total_likes} total likes\n')
-                return  # End program
+            if end_cursor is None:
+                print('\nFinished!\n')
+                break
+            print('\n[+] Grabbing more posts\n')
+            sleep(RATE_LIMIT)
 
     def parse_json(self, j):
         """Parse json found in POST response
@@ -148,14 +119,14 @@ class Instagram():
         :returns: The next end_cursor if has_next_page is True
 
         """
-        post_count = len(j['media']['nodes'])  # will be 12 unless it's the last page
+        post_count = len(j['media']['nodes'])  # 12 unless it's the last page
         for post in range(post_count):
             code = j['media']['nodes'][post]['code']
             likes = int(j['media']['nodes'][post]['likes']['count'])
             comment_count = int(j['media']['nodes'][post]['comments']['count'])
 
             # likes and comment_count keys are always present even if zero,
-            # but caption key will be absent if no caption exists, so except it
+            # but caption key is only present if caption exists, so except it
             try:
                 caption = j['media']['nodes'][post]['caption']
             except KeyError:
@@ -165,14 +136,13 @@ class Instagram():
             date = self.date_format(timestamp)
 
             self.counter += 1
-            self.total_likes += likes
             print(f'{self.counter}/{self.total_posts}')
 
             self.db.write(date, code, likes, comment_count, caption)
 
         end_cursor = j['media']['page_info']['end_cursor']
         has_next_page = j['media']['page_info']['has_next_page']
-        return end_cursor if has_next_page else False
+        return end_cursor if has_next_page else None
 
     def date_format(self, timestamp):
         """Convert unix timestamp (GMT) to local timezone
@@ -196,7 +166,7 @@ class Database:
     """Write instagram posts to database"""
 
     def __init__(self):
-        """Instantiate the database"""
+        """Initialize the database"""
         self.conn = sqlite3.connect(f'{user_account}.db')
         self.cur = self.conn.cursor()
         self.create_tables()
