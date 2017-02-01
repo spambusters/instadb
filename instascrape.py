@@ -9,7 +9,7 @@ import tzlocal
 
 USER_AGENT = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:50.0) Gecko/20100101 Firefox/50.0'
 RATE_LIMIT = 6  # seconds
-RETRIEVE = 12  # posts to retrieve each loop
+RETRIEVE = 12  # posts retrieved each loop
 
 
 class Instagram():
