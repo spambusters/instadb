@@ -15,6 +15,13 @@ Simply enter the Instagram username when prompted.
 
 `RATE_LIMIT = 6  # seconds`  
 
+## Configuration
+Change the rate limit in seconds  
+`RATE_LIMIT = 6`  
+
+Change the amount of posts retrieved each loop  
+`RETRIEVE = 12`  
+
 ## Output  
 Posts are written to a local database. The database file will be named after the scraped instagram user - e.g. `sportscenter.db`  
 
