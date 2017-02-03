@@ -30,7 +30,8 @@ class Instagram():
     def start(self):
         """Establish variables that will be needed to POST our queries
 
-        We need the user_id to build our POST payloads.
+        user_id is used to build all POST payloads.
+        end_cursor is used to build the first POST payload.
         We need the csrftoken so Instagram will allow us to query.
 
         :returns: Passes POST variables to post query loop
@@ -43,6 +44,7 @@ class Instagram():
             raise SystemExit
 
         user_id = re.findall(r'owner[":\s{id]+[0-9]+', resp.text)[0][16:]
+        end_cursor = re.findall(r'end\_cursor[\"\s:]*[\w_-]*"', resp.text)[0][14:-1]
         token = resp.cookies['csrftoken']
         headers = {
             'User-Agent': USER_AGENT,
@@ -53,7 +55,7 @@ class Instagram():
             'x-csrftoken': token
         }
         self.total_posts =  self.get_total_posts(resp.text)
-        return self.post_query(user_id, headers)
+        return self.post_query(user_id, end_cursor, headers)
 
     def bad_username(self, resp):
         """Check for a private profile or 404 link.
@@ -84,10 +86,11 @@ class Instagram():
         j = json.loads(jaysun)  # convert to a dict
         return j['entry_data']['ProfilePage'][0]['user']['media']['count']
 
-    def post_query(self, user_id, headers):
+    def post_query(self, user_id, end_cursor, headers):
         """POST query to receive 12 posts at a time
 
         :param user_id: Instagram user id from initial GET html
+        :param end_cursor: Tells Instagram which posts to send next
         :param headers: The HTTP headers with csrftoken
 
         If the POST json response includes the key 'has_next_page' set to True,
@@ -98,7 +101,6 @@ class Instagram():
         get the correct end_cursor needed for the next 12 posts.
 
         """
-        end_cursor = 1234567890
         while True:
             # A behemoth appears
             payload = f'q=ig_user({user_id})+%7B+media.after({end_cursor}%2C+{RETRIEVE})+%7B%0A++count%2C%0A++nodes+%7B%0A++++caption%2C%0A++++code%2C%0A++++comments+%7B%0A++++++count%0A++++%7D%2C%0A++++date%2C%0A++++dimensions+%7B%0A++++++height%2C%0A++++++width%0A++++%7D%2C%0A++++display_src%2C%0A++++id%2C%0A++++is_video%2C%0A++++likes+%7B%0A++++++count%0A++++%7D%2C%0A++++owner+%7B%0A++++++id%0A++++%7D%2C%0A++++thumbnail_src%0A++%7D%2C%0A++page_info%0A%7D%0A+%7D&ref=users%3A%3Ashow'
@@ -125,8 +127,7 @@ class Instagram():
             likes = int(j['media']['nodes'][post]['likes']['count'])
             comment_count = int(j['media']['nodes'][post]['comments']['count'])
 
-            # likes and comment_count keys are always present even if zero,
-            # but caption key is only present if caption exists, so except it
+            # caption key is only present if caption exists
             try:
                 caption = j['media']['nodes'][post]['caption']
             except KeyError:
@@ -147,12 +148,10 @@ class Instagram():
     def date_format(self, timestamp):
         """Convert unix timestamp (GMT) to local timezone
 
-        Called only when a new post is written to the db
-
         :param timestamp: Unix timestamp found in json
 
         tzlocal module allows conversion to correct day based on local timezone
-        e.g. 2AM GMT is actually 6,7,8 hours earlier in the USA, and a different date
+        e.g. 2AM GMT is actually 6-8 hours earlier in the USA, and a different date
 
         """
         unix_timestamp = float(timestamp)
