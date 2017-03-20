@@ -21,7 +21,8 @@ optional arguments:
 ```
 
 ## Output  
-Posts are written to a local database. The database file will be named after the scraped instagram user - e.g. `okcthunder.db`    
+Posts are written to a local database. The database file will be named after the scraped instagram user - e.g. `okcthunder.db`  
+
 This is an sqlite3 database, so I suggest using [DB Browser for SQLite](http://sqlitebrowser.org/) for easy navigation.  
 It will allow you to sort by e.g. likes count to find the most popular post.
 
