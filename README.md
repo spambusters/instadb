@@ -1,5 +1,5 @@
 # instascrape
-Retrieve an instagram user's posts and write them to a database without using an API
+Instagram user data scraping, with proxy support!
 
 ## Requirements
 1. Python 3.6
