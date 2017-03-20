@@ -27,7 +27,7 @@ class Instascrape:
 
     def get_args(self):
         """Parse CLI arguments"""
-        parser = argparse.ArgumentParser(description='Instagram post to tumblr')
+        parser = argparse.ArgumentParser(description='Scrape data from an Instagram user')
         parser.add_argument('user', help='Instagram user')
         parser.add_argument('--proxy', help='Proxy support. Addr:Port (192.168.0.1:8080) - Must be HTTPS capable!')
         args = parser.parse_args()
