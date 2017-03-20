@@ -11,8 +11,6 @@ Retrieve an instagram user's posts and write them to a database without using an
 ```
 instascrape.py [-h] [--proxy PROXY] user
 
-Instagram post to tumblr
-
 positional arguments:
   user           Instagram user
 
@@ -23,16 +21,8 @@ optional arguments:
 ```
 
 ## Output  
-Posts are written to a local database. The database file will be named after the scraped instagram user - e.g. `sportscenter.db`  
-
-Each post has the following data written to the db:  
-* date
-* post type
-* share link code (e.g. instagram.com/p/`BPaG7ecBQIO`)
-* likes count
-* location
-* caption   
-
-This is an sqlite3 database, so I suggest using [DB Browser for SQLite](http://sqlitebrowser.org/) for easy navigation. It will allow you to sort by e.g. likes count to find the most popular post.
+Posts are written to a local database. The database file will be named after the scraped instagram user - e.g. `okcthunder.db`    
+This is an sqlite3 database, so I suggest using [DB Browser for SQLite](http://sqlitebrowser.org/) for easy navigation.  
+It will allow you to sort by e.g. likes count to find the most popular post.
 
 ![alt text](https://i.imgur.com/KCynhHT.png)
