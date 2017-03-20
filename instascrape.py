@@ -38,29 +38,6 @@ class Instascrape:
                 raise SystemExit(f'\n[!] Error: Proxy must be in the format Address:Port (e.g. 192.168.0.1:8080)\n')
         return args
 
-    def get_json(self, end_cursor=''):
-        """Retrieve json from instagram
-        
-        :param end_cursor: The post id that indicates the next set of posts to retrieve.
-                    e.g. ?max_id=123456789 means retrieve the next posts AFTER that ID.
-        :returns: json
-
-        """
-        url = f'https://www.instagram.com/{self.user}/media/'
-        if end_cursor:
-            url += f'?max_id={end_cursor}'
-        try:
-            resp = self.session.get(url, proxies=self.proxy, timeout=10)
-        except Exception as e:
-            raise SystemExit(f'\n{e}\n')
-
-        if not self.session.headers.get('csrftoken'):
-            self.session.headers.update({
-                'csrftoken': resp.cookies['csrftoken']
-            })
-
-        return resp.json()
-
     def scrape(self):
         """Loop to scrape data from each json response"""
         end_cursor = ''
@@ -86,7 +63,7 @@ class Instascrape:
                     location = None
 
                 try:
-                    caption = js['items'][post]['caption']['text'] or None
+                    caption = js['items'][post]['caption']['text']
                 except TypeError:
                     caption = None
 
@@ -108,6 +85,29 @@ class Instascrape:
                     sleep(2)
                 else:
                     sleep(6)
+
+    def get_json(self, end_cursor=''):
+        """Retrieve json from instagram
+        
+        :param end_cursor: The post id that indicates the next set of posts to retrieve.
+                    e.g. ?max_id=123456789 means retrieve the next posts AFTER that ID.
+        :returns: json
+
+        """
+        url = f'https://www.instagram.com/{self.user}/media/'
+        if end_cursor:
+            url += f'?max_id={end_cursor}'
+        try:
+            resp = self.session.get(url, proxies=self.proxy, timeout=10)
+        except Exception as e:
+            raise SystemExit(f'\n{e}\n')
+
+        if not self.session.headers.get('csrftoken'):
+            self.session.headers.update({
+                'csrftoken': resp.cookies['csrftoken']
+            })
+
+        return resp.json()
 
     def date_format(self, timestamp):
         """Convert unix timestamp (GMT) to local timezone
