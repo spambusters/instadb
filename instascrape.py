@@ -55,7 +55,9 @@ class Instascrape:
                 code = js['items'][post]['code']
                 post_type = js['items'][post]['type']
                 timestamp = js['items'][post]['created_time']
-                date = self.date_format(timestamp)
+                date_time = self.date_format(timestamp)
+                date = date_time.split('~')[0]
+                time = date_time.split('~')[1]
 
                 try:
                     location = js['items'][post]['location']['name']
@@ -72,7 +74,7 @@ class Instascrape:
                 except TypeError:
                     likes = None
 
-                db.write(date, post_type, code, likes, location, caption)
+                db.write(date, time, post_type, code, likes, location, caption)
 
                 print(f'{counter} - {code}')
                 counter += 1
@@ -82,7 +84,7 @@ class Instascrape:
             else:
                 end_cursor = js['items'][-1]['id']
                 if self.proxy:
-                    sleep(2)
+                    sleep(1)
                 else:
                     sleep(6)
 
@@ -121,7 +123,7 @@ class Instascrape:
         unix_timestamp = float(timestamp)
         local_timezone = tzlocal.get_localzone()
         local_time = datetime.fromtimestamp(unix_timestamp, local_timezone)
-        date = local_time.strftime('%b,%d,%Y')
+        date = local_time.strftime('%b,%d,%Y~%l:%M %p')
         return date
 
 
