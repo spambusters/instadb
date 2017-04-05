@@ -11,7 +11,9 @@ class Database:
         self.create_tables()
 
     def create_tables(self):
-        self.cur.execute('CREATE TABLE IF NOT EXISTS users(date TEXT, time TEXT, type TEXT, code TEXT, likes INT, location TEXT, caption TEXT)')
+        self.cur.execute(('CREATE TABLE IF NOT EXISTS users(date TEXT,'
+                          ' time TEXT, type TEXT, code TEXT, likes INT,'
+                          ' location TEXT, caption TEXT)'))
 
     def write(self, date, time, post_type, code, likes, location, caption):
         """Insert entries into Database
@@ -25,5 +27,7 @@ class Database:
         :param caption: Post caption
 
         """
-        self.cur.execute('INSERT INTO users VALUES(?, ?, ?, ?, ?, ?, ?)', (date, time, post_type, code, likes, location, caption))
+        self.cur.execute('INSERT INTO users VALUES(?, ?, ?, ?, ?, ?, ?)',
+                         (date, time, post_type, code, likes,
+                          location, caption))
         self.conn.commit()
