@@ -20,22 +20,28 @@ class Instascrape:
 
         self.session = requests.Session()
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:50.0) Gecko/20100101 Firefox/50.0',
+            'User-Agent': ('Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:50.0)'
+                           'Gecko/20100101 Firefox/50.0'),
             'Origin': 'https://www.instagram.com',
             'Referer': 'https://www.instagram.com/'
         })
 
     def get_args(self):
         """Parse CLI arguments"""
-        parser = argparse.ArgumentParser(description='Scrape data from an Instagram user')
-        parser.add_argument('user', help='Instagram user')
-        parser.add_argument('--proxy', help='Proxy support. Addr:Port (192.168.0.1:8080) - Must be HTTPS capable!')
+        parser = argparse.ArgumentParser(
+                            description='Scrape data from an Instagram user')
+        parser.add_argument('user',
+                            help='Instagram user')
+        parser.add_argument('--proxy',
+                            help=('Proxy support. Addr:Port (192.168.0.1:8080)'
+                                  '- Must be HTTPS capable!'))
         args = parser.parse_args()
 
         if args.proxy:
             proxy_pattern = '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\:\d{2,5}$'
             if not re.search(proxy_pattern, args.proxy):
-                raise SystemExit(f'\n[!] Error: Proxy must be in the format Address:Port (e.g. 192.168.0.1:8080)\n')
+                raise SystemExit((f'\n[!] Error: Proxy must be in the format'
+                                  ' Address:Port (e.g. 192.168.0.1:8080)\n'))
         return args
 
     def scrape(self):
@@ -47,17 +53,17 @@ class Instascrape:
         while True:
             js = self.get_json(end_cursor)
 
-            posts = len(js['items'])
-            if posts == 0:
-                raise SystemExit(f'\nBad/Private User!\n')
+            post_count = len(js['items'])
+            if post_count == 0:
+                raise SystemExit(f'\n[!] Bad/Private User!\n')
 
-            for post in range(posts):
+            for post in range(post_count):
                 code = js['items'][post]['code']
                 post_type = js['items'][post]['type']
                 timestamp = js['items'][post]['created_time']
-                date_time = self.date_format(timestamp)
-                date = date_time.split('~')[0]
-                time = date_time.split('~')[1]
+                date_time = self.date_format(timestamp).split('~')
+                date = date_time[0]
+                time = date_time[1]
 
                 try:
                     location = js['items'][post]['location']['name']
@@ -90,9 +96,10 @@ class Instascrape:
 
     def get_json(self, end_cursor=''):
         """Retrieve json from instagram
-        
-        :param end_cursor: The post id that indicates the next set of posts to retrieve.
-                    e.g. ?max_id=123456789 means retrieve the next posts AFTER that ID.
+
+        :param end_cursor: The post id that indicates the next set of posts to
+            retrieve. e.g. ?max_id=123456789 means retrieve the next posts
+            AFTER that ID.
         :returns: json
 
         """
@@ -117,7 +124,7 @@ class Instascrape:
         :param timestamp: Unix timestamp (epoch) found in json
 
         tzlocal module allows conversion to correct day based on local timezone
-        e.g. 2AM GMT is actually 6-8 hours earlier in the USA, and a different date
+        e.g. 2AM GMT is actually 6-8 hours earlier in the USA, a different date
 
         """
         unix_timestamp = float(timestamp)
