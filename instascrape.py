@@ -20,8 +20,9 @@ class Instascrape:
 
         self.session = requests.Session()
         self.session.headers.update({
-            'User-Agent': ('Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:50.0)'
-                           'Gecko/20100101 Firefox/50.0'),
+            'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                           'AppleWebKit/537.36 (KHTML, like Gecko) '
+                           'Chrome/56.0.2924.87 Safari/537.36'),
             'Origin': 'https://www.instagram.com',
             'Referer': 'https://www.instagram.com/'
         })
@@ -33,15 +34,15 @@ class Instascrape:
         parser.add_argument('user',
                             help='Instagram user')
         parser.add_argument('--proxy',
-                            help=('Proxy support. Addr:Port (192.168.0.1:8080)'
-                                  '- Must be HTTPS capable!'))
+                            help=('address:port (192.168.0.1:8080) '
+                                  '- must be HTTPS capable!'))
         args = parser.parse_args()
 
         if args.proxy:
             proxy_pattern = '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\:\d{2,5}$'
             if not re.search(proxy_pattern, args.proxy):
-                raise SystemExit((f'\n[!] Error: Proxy must be in the format'
-                                  ' Address:Port (e.g. 192.168.0.1:8080)\n'))
+                raise SystemExit((f'\n[!] Error: Proxy must be in the format '
+                                  'address:port (192.168.0.1:8080)\n'))
         return args
 
     def scrape(self):
