@@ -130,7 +130,7 @@ class Instascrape:
         unix_timestamp = float(timestamp)
         local_timezone = tzlocal.get_localzone()
         local_time = datetime.fromtimestamp(unix_timestamp, local_timezone)
-        date = local_time.strftime('%b,%d,%Y~%I:%M %p')
+        date = local_time.strftime('%Y-%m-%d~%I:%M %p')
         return date
 
 
