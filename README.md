@@ -25,6 +25,8 @@ Posts are written to a local database named after the scraped user. e.g.,
 https://www.instagram.com/sportscenter/ will be `sportscenter.db`  
 
 This is an sqlite3 database, so I suggest using [DB Browser for SQLite](http://sqlitebrowser.org/) for easy navigation.  
-It will allow you to sort columns by e.g. likes to find the most popular post.
+It will allow you to sort columns by e.g. likes to find the most popular post.  
+
+Post times are converted to your local time zone thanks to the tzlocal module.  
 
 ![alt text](https://i.imgur.com/prNgHo7.png)
