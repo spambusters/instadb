@@ -87,6 +87,7 @@ class Instascrape:
                 counter += 1
 
             if js['more_available'] is False:
+                db.commit()
                 return print('\nFinished\n')
             else:
                 end_cursor = js['items'][-1]['id']

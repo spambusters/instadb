@@ -30,4 +30,8 @@ class Database:
         self.cur.execute('INSERT INTO users VALUES(?, ?, ?, ?, ?, ?, ?)',
                          (date, time, post_type, code, likes,
                           location, caption))
+
+    def commit(self):
+        """Commit all DB changes and close it"""
         self.conn.commit()
+        self.conn.close()
