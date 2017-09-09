@@ -1,142 +1,169 @@
-import argparse
 import re
+import sys
 from datetime import datetime
 from time import sleep
 
 import requests
-import tzlocal
 
 from database import Database
 
+# Don't hammer the proxy!
+RATE_LIMIT = 1.5  # seconds
 
-class Instascrape:
-    """Scrape data from an instagram user, writing the results to a local db"""
 
-    def __init__(self):
-        """Pool connections in order to reduce hanshake packets"""
-        args = self.get_args()
-        self.user = args.user
-        self.proxy = {'https': args.proxy} if args.proxy else None
+def main():
+    user = sys.argv[1]
+    db = Database(user)
 
-        self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                           'AppleWebKit/537.36 (KHTML, like Gecko) '
-                           'Chrome/56.0.2924.87 Safari/537.36'),
-            'Origin': 'https://www.instagram.com',
-            'Referer': 'https://www.instagram.com/'
-        })
+    proxy = get_proxy()
 
-    def get_args(self):
-        """Parse CLI arguments"""
-        parser = argparse.ArgumentParser(
-                            description='Scrape data from an Instagram user')
-        parser.add_argument('user',
-                            help='Instagram user')
-        parser.add_argument('--proxy',
-                            help=('address:port (192.168.0.1:8080) '
-                                  '- must be HTTPS capable!'))
-        args = parser.parse_args()
+    session = requests.Session()
+    session.headers.update({
+        'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                       'AppleWebKit/537.36 (KHTML, like Gecko) '
+                       'Chrome/56.0.2924.87 Safari/537.36'),
+        'Origin': 'https://www.instagram.com',
+        'Referer': 'https://www.instagram.com/'
+    })
 
-        if args.proxy:
-            proxy_pattern = '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\:\d{2,5}$'
-            if not re.search(proxy_pattern, args.proxy):
-                raise SystemExit((f'\n[!] Error: Proxy must be in the format '
-                                  'address:port (192.168.0.1:8080)\n'))
-        return args
+    js_user = get_json(session, user, proxy, request='user')
+    parse_user(js_user, db)
 
-    def scrape(self):
-        """Loop to scrape data from each json response"""
-        end_cursor = ''
-        counter = 1
-        db = Database(self.user)
+    total_posts = js_user['user']['media']['count']
+    end_cursor = ''
+    counter = 0
 
-        while True:
-            js = self.get_json(end_cursor)
+    while True:
+        js_media = get_json(session, user, proxy, end_cursor, request='media')
 
-            post_count = len(js['items'])
-            if post_count == 0:
-                raise SystemExit(f'\n[!] Bad/Private User!\n')
+        post_count = len(js_media['items'])
+        for post in range(post_count):
+            code = js_media['items'][post]['code']
+            post_type = js_media['items'][post]['type']
+            timestamp = int(js_media['items'][post]['created_time'])
+            date = date_format(timestamp)
 
-            for post in range(post_count):
-                code = js['items'][post]['code']
-                post_type = js['items'][post]['type']
-                timestamp = js['items'][post]['created_time']
-                date_time = self.date_format(timestamp).split('~')
-                date = date_time[0]
-                time = date_time[1]
+            try:
+                location = js_media['items'][post]['location']['name']
+            except TypeError:
+                location = None
 
-                try:
-                    location = js['items'][post]['location']['name']
-                except TypeError:
-                    location = None
+            try:
+                caption = js_media['items'][post]['caption']['text']
+            except TypeError:
+                caption = None
 
-                try:
-                    caption = js['items'][post]['caption']['text']
-                except TypeError:
-                    caption = None
+            try:
+                likes = js_media['items'][post]['likes']['count']
+            except TypeError:
+                likes = None
 
-                try:
-                    likes = js['items'][post]['likes']['count']
-                except TypeError:
-                    likes = None
+            db.write_media(date, post_type, code, likes, location, caption)
 
-                db.write(date, time, post_type, code, likes, location, caption)
+            counter += 1
+            print(f'{counter}/{total_posts}: {code}')
 
-                print(f'{counter} - {code}')
-                counter += 1
+        if js_media['more_available'] is False:
+            return db.commit()
+        else:
+            end_cursor = js_media['items'][-1]['id']
 
-            if js['more_available'] is False:
-                db.commit()
-                return print('\nFinished\n')
-            else:
-                end_cursor = js['items'][-1]['id']
-                if self.proxy:
-                    sleep(1)
-                else:
-                    sleep(6)
+        sleep(RATE_LIMIT)
 
-    def get_json(self, end_cursor=''):
-        """Retrieve json from instagram
 
-        :param end_cursor: The post id that indicates the next set of posts to
-            retrieve. e.g. ?max_id=123456789 means retrieve the next posts
-            AFTER that ID.
-        :returns: json
+def parse_user(js, db):
+    """Parse out data from user JSON page and write to user DB table
 
-        """
-        url = f'https://www.instagram.com/{self.user}/media/'
+    :param js: JSON from ?__a=1 user page
+    :param db: Database object
+
+    """
+    if js['user']['is_private']:
+        sys.exit(f'\n[!] Private user\n')
+
+    id = int(js['user']['id'])
+    full_name = js['user']['full_name']
+    username = js['user']['username']
+    bio = js['user']['biography']
+    followers = int(js['user']['followed_by']['count'])
+    following = int(js['user']['follows']['count'])
+
+    db.write_user(id, full_name, username, bio, followers, following)
+
+
+def get_proxy():
+    print('\n[?] Proxy usage is mandatory to avoid an IP ban.')
+    print('[?] Check out for https://www.us-proxy.org for a list.')
+    while True:
+        proxy = input('[+] Enter proxy: ')
+        if not proxy:
+            return None
+
+        proxy_pattern = '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\:\d{2,5}$'
+        if re.search(proxy_pattern, proxy):
+            proxy = {'https': proxy}
+            return proxy
+        else:
+            print('\n[!] Proxy must be in format address:port')
+
+
+def get_json(session, user, proxy, end_cursor='', request='media'):
+    """Retrieve JSON from Instagram
+
+    :param session: Request session to pool connections
+    :param user: Instagram user
+    :param proxy: The proxy
+    :param end_cursor: Indicates the next set of posts to retrieve.
+        Example: ?max_id=123456789 means retrieve the next posts AFTER that ID.
+    :param reqest: Specify a /media request, or a ?__a=1 user page request
+
+    :returns: JSON response from Instagram
+
+    """
+    if request is 'media':
+        url = f'https://www.instagram.com/{user}/media/'
         if end_cursor:
             url += f'?max_id={end_cursor}'
+    elif request is 'user':
+        url = f'https://www.instagram.com/{user}/?__a=1'
+
+    while True:
         try:
-            resp = self.session.get(url, proxies=self.proxy, timeout=10)
-        except Exception as e:
-            raise SystemExit(f'\n{e}\n')
+            resp = session.get(url, proxies=proxy, timeout=10)
+            if resp.status_code == 403:
+                print(f'\n[!] Forbidden (403)\007')
+                proxy = get_proxy()
+            else:
+                break
+        except (requests.exceptions.ProxyError,
+                requests.exceptions.ReadTimeout,
+                requests.exceptions.ConnectTimeout):
+            print('\n[!] Proxy error\007')
+            proxy = get_proxy()
 
-        if not self.session.headers.get('csrftoken'):
-            self.session.headers.update({
-                'csrftoken': resp.cookies['csrftoken']
-            })
+    if resp.status_code == 404:
+        sys.exit(f'\n[!] User {user} is 404\n')
 
+    try:
         return resp.json()
+    except Exception as e:
+        sys.exit(f'\n[!] Can\'t decode JSON response\n{e}\n')
 
-    def date_format(self, timestamp):
-        """Convert unix timestamp (GMT) to local timezone
 
-        :param timestamp: Unix timestamp (epoch) found in json
+def date_format(timestamp: int):
+    """Format post timestamp as strftime
 
-        tzlocal module allows conversion to correct day based on local timezone
-        e.g. 2AM GMT is actually 6-8 hours earlier in the USA, a different date
+    :param timestamp: Timestamp found in json
+    :returns: Strftime '2017-09-09 16:48'
 
-        """
-        unix_timestamp = float(timestamp)
-        local_timezone = tzlocal.get_localzone()
-        local_time = datetime.fromtimestamp(unix_timestamp, local_timezone)
-        date = local_time.strftime('%Y-%m-%d~%I:%M %p')
-        return date
+    Timestamp is pre-converted to local time by Instagram's servers!
+
+    """
+    time = datetime.fromtimestamp(timestamp)
+    date = time.strftime('%Y-%m-%d %H:%M')
+    return date
 
 
 if __name__ == '__main__':
 
-    insta = Instascrape()
-    insta.scrape()
+    main()

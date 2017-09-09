@@ -1,32 +1,23 @@
 # instascrape
 Instagram user data scraping, with proxy support!
 
+#### Note: This script doesn't download images (yet)
+
 ## Requirements
 1. Python 3.6
 2. sqlite3
-3. Requests module `pip install requests`
-4. tzlocal module `pip install tzlocal`
+3. Requests module `pip install requests`  
 
 ## Usage
 ```
-instascrape.py [-h] [--proxy PROXY] user
-
-positional arguments:
-  user           Instagram user
-
-optional arguments:
-  -h, --help     show this help message and exit
-  --proxy PROXY  address:port (192.168.0.1:8080) - must be HTTPS
-                 capable!
-```
+instascrape.py user
+```  
 
 ## Output  
 Posts are written to a local database named after the scraped user. e.g.,  
 https://www.instagram.com/sportscenter/ will be `sportscenter.db`  
 
 This is an sqlite3 database, so I suggest using [DB Browser for SQLite](http://sqlitebrowser.org/) for easy navigation.  
-It will allow you to sort columns by e.g. likes to find the most popular post.  
+It allows you to sort columns e.g. sort likes to find the most popular post.  
 
-Post times are converted to your local time zone thanks to the tzlocal module.  
-
-![alt text](https://i.imgur.com/prNgHo7.png)
+![alt text](https://i.imgur.com/uxvNDZu.png)
