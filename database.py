@@ -36,7 +36,6 @@ class Database:
         """Insert info into user table"""
         self.cur.execute('INSERT INTO user VALUES(?, ?, ?, ?, ?, ?)',
                          (id, full_name, username, bio, followers, following))
-        self.conn.commit()
 
     def write_media(self,
                     date: str,
@@ -57,7 +56,6 @@ class Database:
         """
         self.cur.execute('INSERT INTO media VALUES(?, ?, ?, ?, ?, ?)',
                          (date, post_type, code, likes, location, caption))
-        self.conn.commit()
 
     def commit(self):
         """Commit all DB changes"""
