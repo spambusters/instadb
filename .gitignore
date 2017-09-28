@@ -1,4 +1,3 @@
 *.db
 *.json
-# no subfolders
-**
+*/*
