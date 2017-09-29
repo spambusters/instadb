@@ -1,6 +1,5 @@
 from datetime import datetime
 
-
 class Posts:
     """This object holds and accesses the JSON for each page of posts"""
 
@@ -56,13 +55,55 @@ class Posts:
         return caption
 
     def media(self, post_num):
-        """Return the post media link (mp4 or jpg)"""
-        if 'video' in self.post_type(post_num):
+        """Return the post media link(s) (mp4 or jpg)
+
+        Carousel posts will return multiple URLs separated by commas.
+
+        """
+        post_type = self.post_type(post_num)
+        if post_type == 'video':
             media = self.js['items'][post_num]['videos']['standard_resolution']['url']
+        elif post_type == 'carousel':
+            media = self.carousel_media(post_num)
         else:
             img_url = self.js['items'][post_num]['images']['standard_resolution']['url']
-            media = img_url.replace('p640x640/', '').replace('s640x640/', '')
+            media = self.clean_img_url(img_url)
         return media
+
+    def carousel_media(self, post_num):
+        """Carousel media is its own nested list, so parse out the media
+        URLs and return them"""
+        media_files = []
+        carousel = self.js['items'][post_num]['carousel_media']
+        slides = len(carousel)
+
+        for slide in range(slides):
+            media_type = carousel[slide]['type']
+            if media_type == 'image':
+                img_url = media = carousel[slide]['images']['standard_resolution']['url']
+                media = self.clean_img_url(img_url)
+            elif media_type == 'video':
+                media = carousel[slide]['videos']['standard_resolution']['url']
+            media_files.append(media)
+
+        # Convert to string for DB
+        return (',').join(media_files)
+
+    def clean_img_url(self, img_url):
+        """Remove stuff from the image URL that makes it a smaller resolution
+
+        Raw URL:
+        https://scontent-atl3-1.cdninstagram.com/t51.2885-15/sh0.08/e35/p640x640/22071003_183507078861288_1653982254898085888_n.jpg
+
+        Cleaned URL:
+        https://scontent-atl3-1.cdninstagram.com/t51.2885-15/sh0.08/e35/22071003_183507078861288_1653982254898085888_n.jpg
+
+        Returns:
+        Full size image URL
+
+        """
+        cleaned_url = img_url.replace('p640x640/', '').replace('s640x640/', '')
+        return cleaned_url
 
     def more_available(self):
         """Determine if another page of posts is available. True or False"""
