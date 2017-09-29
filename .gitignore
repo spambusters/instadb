@@ -1,3 +1,4 @@
 *.db
 *.json
-*/*
+playground
+__pycache__
