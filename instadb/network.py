@@ -50,7 +50,13 @@ class Retrieve:
         if end_cursor:
             url += '?max_id={}'.format(end_cursor)
 
-        resp = self.session.get(url, proxies=self.proxy, timeout=10)
+        try:
+            resp = self.session.get(url, proxies=self.proxy, timeout=10)
+        except (requests.exceptions.ConnectTimeout,
+                requests.exceptions.ReadTimeout):
+            raise SystemExit('\n[!] Connection timeout\n')
+        except requests.exceptions.ProxyError:
+            raise SystemExit('\n[!] Proxy error\n')
 
         if resp.status_code == 404:
             raise SystemExit('\n[!] User {} is 404\n'.format(self.user))
