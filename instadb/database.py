@@ -1,3 +1,4 @@
+import os
 import sqlite3
 
 
@@ -6,9 +7,22 @@ class Database:
 
     def __init__(self, user):
         """Initialize the database"""
-        self.conn = sqlite3.connect('{}.db'.format(user))
+        db_dir = self.make_db_dir()
+        self.conn = sqlite3.connect(os.path.join(db_dir, '{}.db'.format(user)))
         self.cur = self.conn.cursor()
         self.create_tables()
+
+    @staticmethod
+    def make_db_dir():
+        """Create the directory for the database
+
+        $USER --> Downloads --> instadb
+
+        """
+        home = os.path.expanduser(os.path.join('~', 'Downloads'))
+        db_dir = os.path.join(home, 'instadb')
+        os.makedirs(db_dir, exist_ok=True)
+        return db_dir
 
     def create_tables(self):
         """Create database table for posts"""
