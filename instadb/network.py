@@ -51,4 +51,8 @@ class Retrieve:
             url += '?max_id={}'.format(end_cursor)
 
         resp = self.session.get(url, proxies=self.proxy, timeout=10)
+
+        if resp.status_code == 404:
+            raise SystemExit('\n[!] User {} is 404\n'.format(self.user))
+
         return resp.json()
