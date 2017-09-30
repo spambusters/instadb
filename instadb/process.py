@@ -1,7 +1,7 @@
 from datetime import datetime
 
 class Posts:
-    """This object holds and accesses the JSON for each page of posts"""
+    """This class holds and accesses the JSON for each page of posts"""
 
     def __init__(self, js):
         self.js = js
@@ -89,7 +89,8 @@ class Posts:
         # Convert to string for DB
         return (',').join(media_files)
 
-    def clean_img_url(self, img_url):
+    @staticmethod
+    def clean_img_url(img_url):
         """Remove stuff from the image URL that makes it a smaller resolution
 
         Raw URL:
