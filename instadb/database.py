@@ -8,7 +8,8 @@ class Database:
     def __init__(self, user):
         """Initialize the database"""
         db_dir = self.make_db_dir()
-        self.conn = sqlite3.connect(os.path.join(db_dir, '{}.db'.format(user)))
+        db = self.db_file(db_dir, user)
+        self.conn = sqlite3.connect(db)
         self.cur = self.conn.cursor()
         self.create_tables()
 
@@ -19,10 +20,18 @@ class Database:
         $USER --> Downloads --> instadb
 
         """
-        home = os.path.expanduser(os.path.join('~', 'Downloads'))
-        db_dir = os.path.join(home, 'instadb')
+        downloads_dir = os.path.expanduser(os.path.join('~', 'Downloads'))
+        db_dir = os.path.join(downloads_dir, 'instadb')
         os.makedirs(db_dir, exist_ok=True)
         return db_dir
+
+    @staticmethod
+    def db_file(db_dir, user):
+        """Prepare db filename and create backup if db already exists"""
+        filename = os.path.join(db_dir, '{}.db'.format(user))
+        if os.path.isfile(filename):
+            os.rename(filename, filename + '.bak')
+        return filename
 
     def create_tables(self):
         """Create database table for posts"""
