@@ -1,20 +1,31 @@
 from datetime import datetime
 
-class Posts:
-    """This class holds and accesses the JSON for each page of posts"""
 
-    def __init__(self, js):
-        self.js = js
+class JsonPage:
+    """This class holds and accesses the JSON for each page of posts.
+
+    Each page contains a maximum of 20 posts.
+
+    """
+
+    def __init__(self, resp):
+        try:
+            self.js = resp.json()
+        except Exception:   # Don't know the specific error yet
+            with open('bad_json.txt', 'w') as file:
+                # Dump raw in case we got something besides JSON
+                file.write(resp.text)
+            raise SystemExit('\n[!] Bad JSON, check "bad_json.txt"\n')
 
     def num_posts(self):
-        """Returns how many posts are in the JSON (default 20)"""
+        """Return how many posts are in the JSON (default 20)"""
         return len(self.js['items'])
 
     def date(self, post_num):
-        """Return the post date in "2017-12-31 12:30" format"""
+        """Return the post date in "2017:12:31 12:30:02" format"""
         timestamp = int(self.js['items'][post_num]['created_time'])
         time = datetime.fromtimestamp(timestamp)
-        date = time.strftime('%Y-%m-%d %H:%M')
+        date = time.strftime('%Y:%m:%d %H:%M:%S')
         return date
 
     def post_type(self, post_num):
@@ -35,7 +46,7 @@ class Posts:
         try:
             likes = self.js['items'][post_num]['likes']['count']
         except TypeError:
-            likes = None
+            likes = 0
         return likes
 
     def location(self, post_num):
@@ -55,11 +66,7 @@ class Posts:
         return caption
 
     def media(self, post_num):
-        """Return the post media link(s) (mp4 or jpg)
-
-        Carousel posts will return multiple URLs separated by commas.
-
-        """
+        """Return the post media link(s) (mp4 or jpg) as a list"""
         post_type = self.post_type(post_num)
         if post_type == 'video':
             media = self.js['items'][post_num]['videos']['standard_resolution']['url']
@@ -68,7 +75,7 @@ class Posts:
         else:
             img_url = self.js['items'][post_num]['images']['standard_resolution']['url']
             media = self.clean_img_url(img_url)
-        return media
+        return media.split(',')
 
     def carousel_media(self, post_num):
         """Carousel media is its own nested list, so parse out the media
@@ -86,7 +93,6 @@ class Posts:
                 media = carousel[slide]['videos']['standard_resolution']['url']
             media_files.append(media)
 
-        # Convert to string for DB
         return (',').join(media_files)
 
     @staticmethod
