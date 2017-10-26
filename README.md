@@ -52,7 +52,7 @@ optional arguments:
 ```
 
 ### Examples  
-Download all media with the default rate limit + metadata tags, and also write metadata to an Sqlite3 database
+Download all media with the default rate limit + metadata tags, and also write metadata to an Sqlite3 database  
 `instadb.py espn --db`  
 
 Use a proxy to download only photos with at least 2000 likes and no rate limit  
