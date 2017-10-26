@@ -52,6 +52,7 @@ class Retrieve:
         """
         if end_cursor:
             url += '?max_id={}'.format(end_cursor)
+
         while True:
             try:
                 resp = self.session.get(url, timeout=7, proxies=self.proxy)
