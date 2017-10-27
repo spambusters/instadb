@@ -42,11 +42,13 @@ optional arguments:
   --likes LIKES       Only download media with at least this many likes
   --photos            Only download photos
   --videos            Only download videos
-  --tags  [ ...]      Space separated tags used for metadata. This will
-                      override the default tags [user, "instagram"]
-  --path PATH         Custom path for saving local files. Default path is
-                      "$USER/Downloads/instadb/$ig_user/"
-  --new               Only process new media files
+  --path PATH         Custom path for saving local files. (default:
+                      "$USER/Downloads/instadb/$ig_user/")
+  --new               Only download new media files
+
+Metadata:
+  --tags  [ ...]      Space separated media tags (default: [user,
+                      "instagram"])
   --db                Write user metadata to an Sqlite3 database
   --only-db           Skip downloading media files
 ```
