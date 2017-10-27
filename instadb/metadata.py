@@ -92,18 +92,25 @@ class Metadata:
 
         # Title
         subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Caption String {}'.format(self.title), self.filename])
+        subprocess.run(['exiv2', '-M', 'add Exif.Image.ImageDescription {}'.format(self.title), self.filename])
+        subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Headline {}'.format(self.title), self.filename])
 
         # Description
         subprocess.run(['exiv2', '-M', 'add Exif.Photo.UserComment {}'.format(self.caption), self.filename])
         subprocess.run(['exiv2', '-M', 'add Exif.Image.ImageDescription {}'.format(self.caption), self.filename])
+        subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Caption {}'.format(self.caption), self.filename])
 
         # User
         subprocess.run(['exiv2', '-M', 'add Exif.Image.Artist {}'.format(self.user), self.filename])
-        subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Subject {}'.format(self.user), self.filename])
         subprocess.run(['exiv2', '-M', 'add Exif.Photo.CameraOwnerName {}'.format(self.user), self.filename])
         subprocess.run(['exiv2', '-M', 'add Exif.Image.Copyright {}'.format(self.user), self.filename])
+        subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Writer {}'.format(self.user), self.filename])
+        subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Subject {}'.format(self.user), self.filename])
+        subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Credit {}'.format(self.user), self.filename])
+        subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Copyright {}'.format(self.user), self.filename])
 
         # Write EXIF time
         subprocess.run(['exiv2', '-M', 'add Exif.Photo.DateTimeOriginal {}'.format(self.date), self.filename])
+        subprocess.run(['exiv2', '-M', 'add Exif.Image.DateTime {}'.format(self.date), self.filename])
         # Change file time to EXIF time
         subprocess.run(['exiv2', '-T', self.filename])
