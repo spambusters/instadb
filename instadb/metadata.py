@@ -25,7 +25,7 @@ class Metadata:
         self.caption = caption
 
         self.title = '{} - {}'.format(user, code)
-        self.tags = tags
+        self.tags = tags if tags else []  # in case user specified empty --tags
         self.file_ext = self.filename.split('.')[-1]
 
         # Call one of the methods
@@ -83,6 +83,12 @@ class Metadata:
 
     def process_image(self):
         """Add Exiv2 metadata to a downloaded image file"""
+        # try:
+        #     subprocess.run(['exiftool', f'{self.filename}', f'-IFD0:XPSubject={self.user}', '-r', '-overwrite_original'])
+        #     subprocess.run(['exiftool', f'{self.filename}', f'-IFD0:XPComment={self.caption}', '-r', '-overwrite_original'])
+        # except FileNotFoundError:
+        #     pass
+
         # Tags
         for tag in self.tags:
             try:
