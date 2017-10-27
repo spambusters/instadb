@@ -28,48 +28,50 @@ def parse_args():
         '--likes',
         help='Only download media with at least this many likes',
         type=int)
-    parser.add_argument(
+    media_group = parser.add_mutually_exclusive_group()
+    media_group.add_argument(
         '--photos',
         help='Only download photos',
         action='store_true'
     )
-    parser.add_argument(
+    media_group.add_argument(
         '--videos',
         help='Only download videos',
         action='store_true'
     )
     parser.add_argument(
-        '--tags',
-        help=('Space separated tags used for metadata. '
-              'This will override the default tags [user, "instagram"]'),
-        nargs='+',
-        metavar='')
-    parser.add_argument(
         '--path',
-        help=('Custom path for saving local files. Default path is '
-              '"$USER/Downloads/instadb/$ig_user/"'),
+        help=('Custom path for saving local files. (default: "$USER/Downloads/instadb/$ig_user/")'),
         metavar='PATH')
     parser.add_argument(
         '--new',
         help=('Only download new media files'),
         action='store_true'
     )
-    parser.add_argument(
+
+    metadata = parser.add_argument_group('Metadata')
+    metadata.add_argument(
+        '--tags',
+        help=('Space separated media tags (default: [user, "instagram"])'),
+        nargs='+',
+        metavar='')
+    metadata.add_argument(
         '--db',
         help='Write user metadata to an Sqlite3 database',
         action='store_true',
         dest="write_db"
     )
-    parser.add_argument(
+    metadata.add_argument(
         '--only-db',
         help="Skip downloading media files",
         action='store_true'
     )
+
     args = parser.parse_args()
 
     if args.proxy:
         if not correct_proxy_format(args.proxy):
-            raise SystemExit('\n[!] {} is not address:port\n'.format(args.proxy))
+            parser.error('\n[!] {} is not address:port\n'.format(args.proxy))
         else:
             args.proxy = {'https': args.proxy}  # format required by requests
 
@@ -80,10 +82,6 @@ def parse_args():
         # because how would we get the args.user value before parsing?
         args.tags = [args.user, 'instagram']
 
-    if args.photos and args.videos:
-        raise SystemExit('\n[!] Can\'t choose both --photos and --videos.\n'
-                         'Skipping these options will download all '
-                         'media by default.\n')
     return args
 
 
@@ -226,6 +224,9 @@ def mk_downloads_dir(user, custom_path):
 if __name__ == '__main__':
 
     ARGS = parse_args()
-    main(ARGS.user, ARGS.proxy, ARGS.rate_limit, ARGS.path, ARGS.tags,
-         ARGS.likes, ARGS.photos, ARGS.videos, ARGS.new, ARGS.write_db,
-         ARGS.only_db)
+    try:
+        main(ARGS.user, ARGS.proxy, ARGS.rate_limit, ARGS.path, ARGS.tags,
+             ARGS.likes, ARGS.photos, ARGS.videos, ARGS.new, ARGS.write_db,
+             ARGS.only_db)
+    except KeyboardInterrupt:
+        raise SystemExit('\n\n[!] Interrupted by user\n')
