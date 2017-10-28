@@ -27,10 +27,11 @@ class Metadata:
 
         # Remove emojis for now
         # XMP can handle them, but Exif UserComment can't
-        bad_chars = [char for char in caption if char not in string.printable]
-        if bad_chars:
-            for char in bad_chars:
-                self.caption = self.caption.replace(char, '')
+        if self.caption:
+            bad_chars = [char for char in caption if char not in string.printable]
+            if bad_chars:
+                for char in bad_chars:
+                    self.caption = self.caption.replace(char, '')
 
         self.title = '{} - {}'.format(user, code)
         self.tags = tags if tags else []  # in case user specified empty --tags
