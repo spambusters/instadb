@@ -17,13 +17,17 @@ Simply download this repository, or use `git clone https://github.com/spambuster
 ## Requirements  
 1. python3
 2. requests  
+    * Network requests
     * ```pip3 install requests```
 3.  mutagen  
+    * Video metadata
     * ```pip3 install mutagen``` 
-4. exiv2  
-    *  This is used for photo tagging and needs to be in your system's PATH.  
-    It's easily installed on Ubuntu with `sudo apt install exiv2`  
-    Windows and OSX users can try looking into exiv2 via its [offical site](http://www.exiv2.org/download.html).
+4. exiftool  
+    * Photo metadata  
+    * Ubuntu
+        * `sudo apt install libimage-exiftool-perl`
+    * Windows / OSX  
+        * Download from the [offical site](https://sno.phy.queensu.ca/~phil/exiftool/), then add it to your system's PATH  
 
 ## Usage  
 ```
