@@ -1,5 +1,5 @@
 # instadb
-## Features  
+## Features
 
 * Download ALL media files from an Instagram user (images, carousel media, videos)
 * Write metadata to ALL media files
@@ -11,17 +11,17 @@
 * Write user posts metadata to an Sqlite3 database
 * Download just photos, or just videos, or everything
 
-## Installation  
+## Installation
 Simply download this repository, or use `git clone https://github.com/spambusters/instadb.git`
 
-## Requirements  
+## Requirements
 1. python 3.5+
 2. requests  
     * Network requests
     * ```pip3 install requests```
 3.  mutagen  
     * Video metadata
-    * ```pip3 install mutagen``` 
+    * ```pip3 install mutagen```
 4. exiftool  
     * Photo metadata  
     * Ubuntu
@@ -29,7 +29,7 @@ Simply download this repository, or use `git clone https://github.com/spambuster
     * Windows / OSX  
         * Download from the [offical site](https://sno.phy.queensu.ca/~phil/exiftool/), then add it to your system's PATH  
 
-## Usage  
+## Usage
 ```
 usage: instadb.py [-h] [--proxy PROXY] [--rate-limit LIMIT] [--likes LIKES]
                   [--photos] [--videos] [--tags  [...]] [--path PATH] [--new]
@@ -57,8 +57,10 @@ Metadata:
   --only-db           Skip downloading media files
 ```
 
-### Examples  
-Download all media with the default rate limit + metadata tags, and also write metadata to an Sqlite3 database  
+### Examples
+*Example account:* https://www.instagram.com/espn/  
+
+Download all media with the default rate limit, metadata tags, and write metadata to an Sqlite3 database  
 `instadb.py espn --db`  
 
 Use a proxy to download only photos with at least 2000 likes and no rate limit  
@@ -73,10 +75,10 @@ Download only new files to a custom path
 Skip downloading media files and only write the metadata database  
 `instadb.py espn --only-db`
 
-### Example Output  
+### Example Output
 ![alt text](https://thumbs.gfycat.com/VictoriousTiredEyas-max-14mb.gif)
 
-## Metadata  
+## Metadata
 ### Videos
 Video metadata is embedded with the intention of being useful for media servers like *Plex*.  
 1. Video Title
@@ -105,7 +107,7 @@ But the metadata can also be useful in a plain old file browser, like Windows ex
 
 Notice the `Date Taken` value. This is the time which the photo was originally uploaded to Instagram. This value is also written as the last "Modification date" for the file, so you can sort to your heart's content.
 
-## Database  
+## Database
 When you specify the `--db` or `--only-db` CLI args, post metadata will be written to an Sqlite3 database in the downloads folder.  
 
 I suggest using [DB Browser for SQLite](http://sqlitebrowser.org/) for browsing.  
