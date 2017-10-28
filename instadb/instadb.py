@@ -135,6 +135,9 @@ def main(user: str, proxy: dict, rate_limit: int, custom_path: str, tags: list,
         print('\n')
 
         resp = retrieve.get(base_url, end_cursor)
+        if not resp:
+            raise SystemExit()
+
         posts = JsonPage(resp)
 
         if posts.private_user(post_counter):
@@ -200,6 +203,9 @@ def main(user: str, proxy: dict, rate_limit: int, custom_path: str, tags: list,
 
                 if not os.path.exists(filename):
                     data = retrieve.get(media)
+                    if not data:  # Instagram 404'd the media link
+                        continue  # to next media file
+
                     with open(filename, 'wb') as file:
                         file.write(data.content)
                     print('{}: {}'.format(post_counter, filename))

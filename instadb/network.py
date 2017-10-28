@@ -49,6 +49,8 @@ class Retrieve:
         Example:
         https://www.instagram.com/user/media/?max_id={end_cursor} <--
 
+        returns: False if the URL is 404'd
+
         """
         if end_cursor:
             url += '?max_id={}'.format(end_cursor)
@@ -66,7 +68,8 @@ class Retrieve:
                 self.proxy = self.new_proxy()
 
         if resp.status_code == 404:
-            raise SystemExit('\n[!] {} is 404\n'.format(url))
+            print('\n[!] {} is 404\n'.format(url))
+            return False
 
         return resp
 
