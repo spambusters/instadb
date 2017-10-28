@@ -103,7 +103,7 @@ def process_image(filename: str, user: str, date=None, caption=None,
         Example: 'BapbIcAFsCL'
 
     """
-    if os.path.exists(filename) is False:
+    if not os.path.exists(filename):
         raise SystemExit('\n[!] Can\'t find {}\n'.format(filename))
 
     title = user
