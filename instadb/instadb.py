@@ -2,8 +2,8 @@ import argparse
 import os
 from time import sleep
 
+import metadata
 from database import Database
-from metadata import Metadata
 from network import Retrieve, correct_proxy_format
 from parsejson import JsonPage
 
@@ -49,19 +49,19 @@ def parse_args():
         action='store_true'
     )
 
-    metadata = parser.add_argument_group('Metadata')
-    metadata.add_argument(
+    data = parser.add_argument_group('Metadata')
+    data.add_argument(
         '--tags',
         help=('Space separated media tags (default: [user, "instagram"])'),
         nargs='+',
         metavar='')
-    metadata.add_argument(
+    data.add_argument(
         '--db',
         help='Write user metadata to an Sqlite3 database',
         action='store_true',
         dest="write_db"
     )
-    metadata.add_argument(
+    data.add_argument(
         '--only-db',
         help="Skip downloading media files",
         action='store_true'
@@ -188,7 +188,12 @@ def main(user: str, proxy: dict, rate_limit: int, custom_path: str, tags: list,
                     with open(filename, 'wb') as file:
                         file.write(data.content)
                     print('{}: {}'.format(post_counter, filename))
-                    Metadata(user, filename, date, code, caption, tags)
+
+                    if file_ext == 'mp4':
+                        metadata.process_video(filename, user, date, caption, tags, code)
+                    elif file_ext == 'jpg':
+                        metadata.process_image(filename, user, date, caption, tags, code)
+
                     sleep(rate_limit)  # between each (.mp4, .jpg) request
                 elif only_new_files:
                     print('No more new files!')

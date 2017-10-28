@@ -1,5 +1,7 @@
-import subprocess
+import os
+import re
 import string
+import subprocess
 
 try:
     from mutagen.mp4 import MP4
@@ -7,118 +9,165 @@ except ImportError:
     raise SystemExit('\n[!] Mutagen not installed\npip3 install mutagen\n')
 
 
-class Metadata:
-    """Process a downloaded media file by writing its metadata"""
+def process_video(filename: str, user: str, date=None, caption=None,
+                  tags=None, code=None):
+    """Use Mutagen to embed metadata to a video file
 
-    def __init__(self, user, filename, date, code, caption, tags):
-        """
-        I'm only interested in the namespace aspect of this class, not the
-        OOP-ness. So instead of instantiating it with Metadata(), THEN calling
-        a method, I'm gonna save code by calling the method from this init.
+    filename: This can be a cwd file or a full PATH
+        Example: 'image.jpg' or '/home/you/Pictures/image.jpg'
 
-        Hashtag not best practices, but oh well :)
+    user: Username
+        Example: 'sportscenter'
 
-        """
-        self.user = user
-        self.filename = filename
-        self.date = date
-        self.code = code
-        self.caption = caption
+    date: Formatted as YYYY:MM:DD HH:MM:SS
+        Example: '2016:12:25 06:03:49'
 
-        # Remove emojis for now
-        # XMP can handle them, but Exif UserComment can't
-        if self.caption:
-            bad_chars = [char for char in caption if char not in string.printable]
-            if bad_chars:
-                for char in bad_chars:
-                    self.caption = self.caption.replace(char, '')
+    caption: Caption
+        Example: 'This is a caption'
 
-        self.title = '{} - {}'.format(user, code)
-        self.tags = tags if tags else []  # in case user specified empty --tags
-        self.file_ext = self.filename.split('.')[-1]
+    tags: List of tags.
+        Example: ['single tag'] or ['multiple', 'tags']
 
-        # Call one of the methods
-        if self.file_ext == 'mp4':
-            self.process_video()
-        elif self.file_ext == 'jpg':
-            self.process_image()
+    code: Add an Instagram shortcode to the title
+        Example: 'BapbIcAFsCL'
 
-    def process_video(self):
-        """Add Mutagen metadata to a downloaded video file"""
-        video = MP4(self.filename)
-        video.delete()  # existing metadata
+    """
+    title = user
+    if code:
+        title += ' - {}'.format(code)
 
-        # Title
-        video['\xa9nam'] = self.title
+    video = MP4(filename)
+    video.delete()  # existing metadata
 
-        # Description
-        try:
-            video['desc'] = self.caption
-            video['ldes'] = self.caption  # Long
-            video['\xa9cmt'] = self.caption[:255]  # Comment
-        except TypeError:  # No caption
-            pass
+    video['\xa9nam'] = title
 
-        # Date
-        video['purd'] = self.date  # Purchase Date
-        video['\xa9day'] = self.date.split(':')[0]  # Year
+    if caption:
+        video['desc'] = caption
+        video['ldes'] = caption  # Long
+        video['\xa9cmt'] = caption[:255]  # Comment
 
-        # Genres (tags)
-        video['\xa9gen'] = ','.join(self.tags)  # Genres
-        video['keyw'] = ','.join(self.tags)  # Podcast Keywords
+    if date and correct_date_format(date):
+        video['purd'] = date  # Purchase Date
+        video['\xa9day'] = date.split(':')[0]  # Year
 
-        # User
-        video['\xa9ART'] = self.user  # Arist
-        video['cprt'] = self.user  # Copyright
-        video['----:com.apple.iTunes:iTunMOVI'] = self.xml_tags()  # Actor
+    if tags and isinstance(tags, list):
+        video['\xa9gen'] = ','.join(tags)  # Genres
+        video['keyw'] = ','.join(tags)  # Podcast Keywords
 
-        video.save()
+    video['\xa9ART'] = user  # Arist
+    video['cprt'] = user  # Copyright
+    video['----:com.apple.iTunes:iTunMOVI'] = xml_tags(user)  # Actor
 
-    def xml_tags(self):
-        """Build XML tags for a video file
-
-        Only XML we're doing right now is for the "Actor" (user)
-
-        """
-        output = '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict>\n'
-        output += '<key>cast</key><array>\n'
-        output += '<dict><key>name</key><string>{}</string></dict>\n'.format(self.user)
-        output += '</array>\n'
-        output += '</dict></plist>\n'
-
-        # String must be made into bytes or Mutagen throws a fit
-        return output.encode('UTF-8')
+    video.save()
 
 
-    def process_image(self):
-        """Add exiftool metadata to a downloaded image file"""
-        try:
-            # Write the keywords (tags)
-            for tag in self.tags:
-                subprocess.run(['exiftool', '{}'.format(self.filename),
-                                '-Keywords+={}'.format(tag),  # Iptc
-                                '-overwrite_original', '-q'])
+def xml_tags(user):
+    """Build XML tags for a video file
 
-            subprocess.run(['exiftool', '{}'.format(self.filename),
-                            '-XPSubject={}'.format(self.user),  # Exif
-                            '-XPAuthor={}'.format(self.user),  # Exif
-                            '-Artist={}'.format(self.user),  # Exif
-                            '-Credit={}'.format(self.user),  # Iptc
-                            '-Copyright={}'.format(self.user),  # Exif
-                            '-Headline={}'.format(self.title),  # Iptc
-                            '-Title={}'.format(self.title),  # XMP
-                            '-Comment={}'.format(self.caption),
-                            '-UserComment={}'.format(self.caption),  # Exif
-                            '-Description={}'.format(self.caption),  # XMP
-                            '-Caption={}'.format(self.caption),  # Iptc
-                            '-XPComment={}'.format(self.caption),  # Exif
-                            '-DateTimeOriginal={}'.format(self.date),  # Exif
+    Only XML we're doing right now is for the "Actor" (user)
+
+    """
+    output = ('<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC '
+              '"-//Apple//DTD PLIST 1.0//EN" '
+              '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
+              '<plist version="1.0"><dict>\n')
+    output += '<key>cast</key><array>\n'
+    output += '<dict><key>name</key><string>{}</string></dict>\n'.format(user)
+    output += '</array>\n'
+    output += '</dict></plist>\n'
+
+    # String must be made into bytes or Mutagen throws a fit
+    return output.encode('UTF-8')
+
+
+def process_image(filename: str, user: str, date=None, caption=None,
+                  tags=None, code=None):
+    """Use exiftool to embed metadata to an image file
+
+    filename: This can be a cwd file or a full PATH
+        Example: 'image.jpg' or '/home/you/Pictures/image.jpg'
+
+    user: Username
+        Example: 'sportscenter'
+
+    date: Formatted as YYYY:MM:DD HH:MM:SS
+        Example: '2016:12:25 06:03:49'
+
+    caption: Caption
+        Example: 'This is a caption'
+
+    tags: List of tags.
+        Example: ['single tag'] or ['multiple', 'tags']
+
+    code: Add an Instagram shortcode to the title
+        Example: 'BapbIcAFsCL'
+
+    """
+    if os.path.exists(filename) is False:
+        raise SystemExit('\n[!] Can\'t find {}\n'.format(filename))
+
+    title = user
+    if code:
+        title += ' - {}'.format(code)
+
+    try:
+        subprocess.run(['exiftool', '{}'.format(filename),
+                        '-XPSubject={}'.format(user),  # Exif
+                        '-XPAuthor={}'.format(user),  # Exif
+                        '-Artist={}'.format(user),  # Exif
+                        '-Credit={}'.format(user),  # Iptc
+                        '-Copyright={}'.format(user),  # Exif
+                        '-Headline={}'.format(title),  # Iptc
+                        '-Title={}'.format(title),  # XMP
+                        '-overwrite_original', '-q'])
+    except FileNotFoundError:
+        raise SystemExit('\n[!] Can\'t find exiftool in the system PATH. '
+                         'Did you install it?\n')
+
+    if tags and isinstance(tags, list):
+        for tag in tags:
+            subprocess.run(['exiftool', '{}'.format(filename),
+                            '-Keywords+={}'.format(tag),  # Iptc
                             '-overwrite_original', '-q'])
 
-            # Finally, set the modification date
-            subprocess.run(['exiftool', '{}'.format(self.filename),
-                            '-FileModifyDate<DateTimeOriginal',
-                            '-overwrite_original', '-q'])
-        except FileNotFoundError:
-            raise SystemExit('\n[!] Can\'t find exiftool in the system PATH. '
-                             'Did you install it?\n')
+    if caption:
+        caption = remove_unicode(caption)
+        subprocess.run(['exiftool', '{}'.format(filename),
+                        '-UserComment={}'.format(caption),  # Exif
+                        '-Description={}'.format(caption),  # XMP
+                        '-Caption={}'.format(caption),  # Iptc
+                        '-XPComment={}'.format(caption),  # Exif
+                        '-overwrite_original', '-q'])
+
+    if date and correct_date_format(date):
+        subprocess.run(['exiftool', '{}'.format(filename),
+                        '-DateTimeOriginal={}'.format(date),  # Exif
+                        '-overwrite_original', '-q'])
+        # Set the modification date.
+        #
+        # This has to be done separate from -DateTimeOriginal
+        # being added or else it doesn't work.
+        subprocess.run(['exiftool', '{}'.format(filename),
+                        '-FileModifyDate<DateTimeOriginal',
+                        '-overwrite_original', '-q'])
+
+
+def remove_unicode(caption):
+    """Remove emojis and other unicode from metadata caption for photos
+
+    XMP can handle emojis, but Exif UserComment can't. This is what's used by
+    Shotwell to display captions, and unicode makes it blank.
+
+    """
+    bad_chars = [char for char in caption if char not in string.printable]
+    if bad_chars:
+        for char in bad_chars:
+            caption = caption.replace(char, '')
+    return caption
+
+
+def correct_date_format(date):
+    """Check if provided date is correctly formatted as YYYY:MM:DD HH:MM:SS"""
+    date_pattern = r'^\d{4}\:\d{2}:\d{2}\s\d{2}:\d{2}:\d{2}$'
+    if re.search(date_pattern, date):
+        return True
