@@ -99,11 +99,11 @@ Because the videos are downloaded from Instagram, they're already optimized for 
 ### Photos
 Photo metadata is useful for photo browsing programs that support it, like *Shotwell*
 
-![alt text](https://i.imgur.com/U1IcFyr.png)
+![alt text](https://i.imgur.com/APXyIiW.png)
 
 But the metadata can also be useful in a plain old file browser, like Windows explorer
 
-![alt text](https://i.imgur.com/JXaDmpE.png)  
+![alt text](https://i.imgur.com/WvD7IhF.png)  
 
 Notice the `Date Taken` value. This is the time which the photo was originally uploaded to Instagram. This value is also written as the last "Modification date" for the file, so you can sort to your heart's content.
 
