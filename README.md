@@ -80,7 +80,7 @@ Skip downloading media files and only write the metadata database
 
 ## Metadata
 ### Videos
-Video metadata is embedded with the intention of being useful for media servers like *Plex*.  
+Video metadata is useful for media servers like *Plex*.
 1. Video Title
     * Same as the filename (user + shortcode)
 2. Cast Members / Studio
@@ -90,7 +90,7 @@ Video metadata is embedded with the intention of being useful for media servers 
 4. Video Summary
     * The post caption
 
-Here's an example video in *Plex* from the https://www.instagram.com/espn/ account: 
+Here's an example video in *Plex* from the https://www.instagram.com/espn/ account:
 
 ![alt text](https://i.imgur.com/TFU2ieJ.png)
 
@@ -99,9 +99,9 @@ Because the videos are downloaded from Instagram, they're already optimized for 
 ### Photos
 Photo metadata is useful for photo browsing programs that support it, like *Shotwell*
 
-![alt text](https://i.imgur.com/U1IcFyr.png)  
+![alt text](https://i.imgur.com/U1IcFyr.png)
 
-But the metadata can also be useful in a plain old file browser, like Windows explorer  
+But the metadata can also be useful in a plain old file browser, like Windows explorer
 
 ![alt text](https://i.imgur.com/JXaDmpE.png)  
 
@@ -111,6 +111,6 @@ Notice the `Date Taken` value. This is the time which the photo was originally u
 When you specify the `--db` or `--only-db` CLI args, post metadata will be written to an Sqlite3 database in the downloads folder.  
 
 I suggest using [DB Browser for SQLite](http://sqlitebrowser.org/) for browsing.  
-It will allow you to sort by column, so for example you can sort by likes to find the most popular post.  
+It will allow you to sort by column, so for example you can sort by likes to find the most popular post.
 
-![alt text](https://i.imgur.com/wA8frS2.png)  
+![alt text](https://i.imgur.com/wA8frS2.png)
