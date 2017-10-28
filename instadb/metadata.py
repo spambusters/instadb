@@ -82,41 +82,34 @@ class Metadata:
 
 
     def process_image(self):
-        """Add Exiv2 metadata to a downloaded image file"""
-        # try:
-        #     subprocess.run(['exiftool', f'{self.filename}', f'-IFD0:XPSubject={self.user}', '-r', '-overwrite_original'])
-        #     subprocess.run(['exiftool', f'{self.filename}', f'-IFD0:XPComment={self.caption}', '-r', '-overwrite_original'])
-        # except FileNotFoundError:
-        #     pass
+        """Add exiftool metadata to a downloaded image file"""
 
-        # Tags
+        try:
+            subprocess.run(['exiftool', f'{self.filename}',
+                            f'-IFD0:XPSubject={self.user}',
+                            f'-IFD0:XPAuthor={self.user}',
+                            f'-IFD0:Artist={self.user}',
+                            f'-IFD0:Copyright={self.user}',
+                            f'-IPTC:Credit={self.user}',
+                            f'-IPTC:CopyrightNotice={self.user}',
+                            f'-ExifIFD:OwnerName={self.user}',
+                            f'-IFD0:ImageDescription={self.title}',
+                            f'-IPTC:Headline={self.title}',
+                            f'-ExifIFD:UserComment={self.caption}',
+                            f'-IFD0:XPComment={self.caption}',
+                            f'-ExifIFD:DateTimeOriginal={self.date}',
+                            f'-IFD0:ModifyDate={self.date}',
+                            '-overwrite_original', '-q'])
+        except FileNotFoundError:
+            raise SystemExit('\n[!] Can\'t find exiftool in the system PATH. Did you install it?\n')
+
+        # Write the keywords (tags)
         for tag in self.tags:
-            try:
-                subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Keywords String {}'.format(tag), self.filename])
-            except FileNotFoundError:
-                raise SystemExit('\n[!] Can\'t tag photos\n[!] Exiv2 not found in PATH. Did you install it?\n')
+            subprocess.run(['exiftool', f'{self.filename}',
+                            f'-IPTC:Keywords+={tag}',
+                            '-overwrite_original', '-q'])
 
-        # Title
-        subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Caption String {}'.format(self.title), self.filename])
-        subprocess.run(['exiv2', '-M', 'add Exif.Image.ImageDescription {}'.format(self.title), self.filename])
-        subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Headline {}'.format(self.title), self.filename])
-
-        # Description
-        subprocess.run(['exiv2', '-M', 'add Exif.Photo.UserComment {}'.format(self.caption), self.filename])
-        subprocess.run(['exiv2', '-M', 'add Exif.Image.ImageDescription {}'.format(self.caption), self.filename])
-        subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Caption {}'.format(self.caption), self.filename])
-
-        # User
-        subprocess.run(['exiv2', '-M', 'add Exif.Image.Artist {}'.format(self.user), self.filename])
-        subprocess.run(['exiv2', '-M', 'add Exif.Photo.CameraOwnerName {}'.format(self.user), self.filename])
-        subprocess.run(['exiv2', '-M', 'add Exif.Image.Copyright {}'.format(self.user), self.filename])
-        subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Writer {}'.format(self.user), self.filename])
-        subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Subject {}'.format(self.user), self.filename])
-        subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Credit {}'.format(self.user), self.filename])
-        subprocess.run(['exiv2', '-M', 'add Iptc.Application2.Copyright {}'.format(self.user), self.filename])
-
-        # Write EXIF time
-        subprocess.run(['exiv2', '-M', 'add Exif.Photo.DateTimeOriginal {}'.format(self.date), self.filename])
-        subprocess.run(['exiv2', '-M', 'add Exif.Image.DateTime {}'.format(self.date), self.filename])
-        # Change file time to EXIF time
-        subprocess.run(['exiv2', '-T', self.filename])
+        # Finally, set the modification date
+        subprocess.run(['exiftool', f'{self.filename}',
+                        '-FileModifyDate<DateTimeOriginal',
+                        '-overwrite_original', '-q'])
