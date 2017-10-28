@@ -1,4 +1,5 @@
 import subprocess
+import string
 
 try:
     from mutagen.mp4 import MP4
@@ -23,6 +24,13 @@ class Metadata:
         self.date = date
         self.code = code
         self.caption = caption
+
+        # Remove emojis for now
+        # XMP can handle them, but Exif UserComment can't
+        bad_chars = [char for char in caption if char not in string.printable]
+        if bad_chars:
+            for char in bad_chars:
+                self.caption = self.caption.replace(char, '')
 
         self.title = '{} - {}'.format(user, code)
         self.tags = tags if tags else []  # in case user specified empty --tags
@@ -83,33 +91,33 @@ class Metadata:
 
     def process_image(self):
         """Add exiftool metadata to a downloaded image file"""
-
         try:
-            subprocess.run(['exiftool', f'{self.filename}',
-                            f'-IFD0:XPSubject={self.user}',
-                            f'-IFD0:XPAuthor={self.user}',
-                            f'-IFD0:Artist={self.user}',
-                            f'-IFD0:Copyright={self.user}',
-                            f'-IPTC:Credit={self.user}',
-                            f'-IPTC:CopyrightNotice={self.user}',
-                            f'-ExifIFD:OwnerName={self.user}',
-                            f'-IFD0:ImageDescription={self.title}',
-                            f'-IPTC:Headline={self.title}',
-                            f'-ExifIFD:UserComment={self.caption}',
-                            f'-IFD0:XPComment={self.caption}',
-                            f'-ExifIFD:DateTimeOriginal={self.date}',
-                            f'-IFD0:ModifyDate={self.date}',
+            # Write the keywords (tags)
+            for tag in self.tags:
+                subprocess.run(['exiftool', '{}'.format(self.filename),
+                                '-Keywords+={}'.format(tag),  # Iptc
+                                '-overwrite_original', '-q'])
+
+            subprocess.run(['exiftool', '{}'.format(self.filename),
+                            '-XPSubject={}'.format(self.user),  # Exif
+                            '-XPAuthor={}'.format(self.user),  # Exif
+                            '-Artist={}'.format(self.user),  # Exif
+                            '-Credit={}'.format(self.user),  # Iptc
+                            '-Copyright={}'.format(self.user),  # Exif
+                            '-Headline={}'.format(self.title),  # Iptc
+                            '-Title={}'.format(self.title),  # XMP
+                            '-Comment={}'.format(self.caption),
+                            '-UserComment={}'.format(self.caption),  # Exif
+                            '-Description={}'.format(self.caption),  # XMP
+                            '-Caption={}'.format(self.caption),  # Iptc
+                            '-XPComment={}'.format(self.caption),  # Exif
+                            '-DateTimeOriginal={}'.format(self.date),  # Exif
+                            '-overwrite_original', '-q'])
+
+            # Finally, set the modification date
+            subprocess.run(['exiftool', '{}'.format(self.filename),
+                            '-FileModifyDate<DateTimeOriginal',
                             '-overwrite_original', '-q'])
         except FileNotFoundError:
-            raise SystemExit('\n[!] Can\'t find exiftool in the system PATH. Did you install it?\n')
-
-        # Write the keywords (tags)
-        for tag in self.tags:
-            subprocess.run(['exiftool', f'{self.filename}',
-                            f'-IPTC:Keywords+={tag}',
-                            '-overwrite_original', '-q'])
-
-        # Finally, set the modification date
-        subprocess.run(['exiftool', f'{self.filename}',
-                        '-FileModifyDate<DateTimeOriginal',
-                        '-overwrite_original', '-q'])
+            raise SystemExit('\n[!] Can\'t find exiftool in the system PATH. '
+                             'Did you install it?\n')
