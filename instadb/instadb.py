@@ -137,7 +137,7 @@ def main(user: str, proxy: dict, rate_limit: int, custom_path: str, tags: list,
         resp = retrieve.get(base_url, end_cursor)
         posts = JsonPage(resp)
 
-        if not posts.public() and post_counter == 0:
+        if posts.private_user(post_counter):
             raise SystemExit('\n[!] Private user {}\n'.format(user))
 
         num_posts = posts.num_posts()
