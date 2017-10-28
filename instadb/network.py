@@ -79,4 +79,7 @@ class Retrieve:
             elif not correct_proxy_format(proxy):
                 print('\n[!] Proxy must be in format address:port')
             else:
+                # Clear out of old csrftoken so Instagram
+                # doesn't know we're the same person.
+                self.session.cookies.clear()
                 return {'https': proxy}  # format required by requests module
