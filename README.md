@@ -15,7 +15,7 @@
 Simply download this repository, or use `git clone https://github.com/spambusters/instadb.git`
 
 ## Requirements  
-1. python3
+1. python 3.5+
 2. requests  
     * Network requests
     * ```pip3 install requests```
