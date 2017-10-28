@@ -4,7 +4,7 @@ import string
 import subprocess
 
 try:
-    from mutagen.mp4 import MP4
+    from mutagen.mp4 import MP4, MP4StreamInfoError
 except ImportError:
     raise SystemExit('\n[!] Mutagen not installed\npip3 install mutagen\n')
 
@@ -36,7 +36,13 @@ def process_video(filename: str, user: str, date=None, caption=None,
     if code:
         title += ' - {}'.format(code)
 
-    video = MP4(filename)
+    try:
+        video = MP4(filename)
+    except MP4StreamInfoError:
+        print('\n[!] Can\'t write tags for {}'.format(filename))
+        print('[!] It probably didn\'t download correctly\n')
+        return
+
     video.delete()  # existing metadata
 
     video['\xa9nam'] = title
