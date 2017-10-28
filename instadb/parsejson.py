@@ -127,3 +127,13 @@ class JsonPage:
 
         """
         return self.js['items'][post_num]['id']
+
+    def public(self):
+        """Determine if the Instagram user has public posts available
+
+        If self.js['items'] is blank, and the post_counter is 0,
+        it must be a private user.
+
+        """
+        if self.js['items']:
+            return True

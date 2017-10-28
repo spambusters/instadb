@@ -91,12 +91,23 @@ def main(user: str, proxy: dict, rate_limit: int, custom_path: str, tags: list,
     """Download an Instagram user's media plus metadata
 
     user: Instagram user
-    proxy: Needs to be in requests format -- {'https': '192.168.0.1:8080'}
+        Example: 'sportscenter'
+
+    proxy: Needs to be in requests format
+        Example: {'https': '192.168.0.1:8080'}
+
     rate_limit: Seconds between Instagram requests
+        Example: 5
+
     custom_path: Optional custom path for saving media files.
-                 Default path is "$USER/Downloads/instadb/$ig_user/"
+        Default: '$USER/Downloads/instadb/user/'
+
     tags: List of tags used for metadata
+        Default: [user, 'instagram']
+
     min_likes_required: Only download media with at least this many likes
+        Example: 2000
+
     only_photos: Only download photos
     only_videos: Only download videos
     only_new_files: Only download new media files
@@ -125,6 +136,10 @@ def main(user: str, proxy: dict, rate_limit: int, custom_path: str, tags: list,
 
         resp = retrieve.get(base_url, end_cursor)
         posts = JsonPage(resp)
+
+        if not posts.public() and post_counter == 0:
+            raise SystemExit('\n[!] Private user {}\n'.format(user))
+
         num_posts = posts.num_posts()
 
         for post in range(num_posts):
