@@ -1,4 +1,7 @@
 # instadb
+
+## This script is currently deprecated due to Instagram removing the public /media/ endpoint  
+
 ## Features
 
 * Download ALL media files from an Instagram user (images, carousel media, videos)
